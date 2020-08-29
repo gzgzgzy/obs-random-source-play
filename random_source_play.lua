@@ -127,7 +127,7 @@ function init_sampler(probs)
     sampler = MultinomialSampler:new(probs, labels)
 end
 
-function play_source(pressed)
+function play_random_source(pressed)
     if not pressed then return end
     -- Check everything before playing source
     if #source_names == 0 then
@@ -153,6 +153,7 @@ function play_source(pressed)
     local idx = sampler:sample()
     info(string.format("Ok: ソース「%s」を選択・再生", source_names[idx]))
     local source = obs.obs_get_source_by_name(source_names[idx])
+    obs.obs_source_set_enabled(source, true)
     local source_data = obs.obs_save_source(source)
     obs.obs_source_update(source, source_data)
     obs.obs_data_release(source_data)
@@ -225,7 +226,7 @@ function script_load(settings)
     info("--- Script loaded ---")
     math.randomseed(os.clock()*100000000000)
     for k, v in pairs(hotkeys) do
-        hk[k] = obs.obs_hotkey_register_frontend(k, v, play_source)
+        hk[k] = obs.obs_hotkey_register_frontend(k, v, play_random_source)
         local hotkey_save_array = obs.obs_data_get_array(settings, k)
         obs.obs_hotkey_load(hk[k], hotkey_save_array)
         obs.obs_data_array_release(hotkey_save_array)
