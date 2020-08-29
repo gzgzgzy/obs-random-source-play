@@ -127,6 +127,13 @@ function init_sampler(probs)
     sampler = MultinomialSampler:new(probs, labels)
 end
 
+function get_current_scene_name()
+    local scene_source = obs.obs_frontend_get_current_scene()
+    local name = obs.obs_source_get_name(scene_source)
+    obs.obs_source_release(scene_source)
+    return name
+end
+
 function play_random_source(pressed)
     if not pressed then return end
     -- Check everything before playing source
@@ -151,13 +158,20 @@ function play_random_source(pressed)
         return
     end
     local idx = sampler:sample()
-    info(string.format("Ok: ソース「%s」を選択・再生", source_names[idx]))
-    local source = obs.obs_get_source_by_name(source_names[idx])
-    obs.obs_source_set_enabled(source, true)
-    local source_data = obs.obs_save_source(source)
-    obs.obs_source_update(source, source_data)
-    obs.obs_data_release(source_data)
-    obs.obs_source_release(source)
+    info(string.format("Ok: ソース「%s」を選択", source_names[idx]))
+    local scene_source = obs.obs_get_source_by_name(get_current_scene_name())
+    local scene = obs.obs_scene_from_source(scene_source)
+    local sceneitem = obs.obs_scene_find_source(scene, source_names[idx])
+    if not sceneitem then
+        warn(string.format("Error: 現在のシーンにソース「%s」が存在しません", source_names[idx]))
+    else
+        obs.obs_sceneitem_set_visible(sceneitem, true)
+        local source = obs.obs_sceneitem_get_source(sceneitem)
+        local source_data = obs.obs_save_source(source)
+        obs.obs_source_update(source, source_data)
+        obs.obs_data_release(source_data)
+    end
+    obs.obs_source_release(scene_source)
 end
 
 -- Override functions
