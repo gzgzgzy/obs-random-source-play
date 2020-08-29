@@ -129,13 +129,13 @@ end
 
 function play_source(pressed)
     if not pressed then return end
-	-- Check everything before playing source
-	if #source_names == 0 then
-		info("Error: ソースが一つも選択されていません")
-		return
-	end
+    -- Check everything before playing source
+    if #source_names == 0 then
+        info("Error: ソースが一つも選択されていません")
+        return
+    end
     local n_source = 0
-	for _, name in ipairs(source_names) do
+    for _, name in ipairs(source_names) do
         -- Check if source with this name exists
         local source = obs.obs_get_source_by_name(name)
         if source == nil then
@@ -145,9 +145,9 @@ function play_source(pressed)
             n_source = n_source + 1
         end
         obs.obs_source_release(source)
-	end
+    end
     if #source_names ~= n_source then
-		warn(string.format("Error: 選択したソース名の数 %d != 確認できたソースの数 %d", #source_names, n_source))
+        warn(string.format("Error: 選択したソース名の数 %d != 確認できたソースの数 %d", #source_names, n_source))
         return
     end
     local idx = sampler:sample()
@@ -162,8 +162,8 @@ end
 -- Override functions
 -- Descriptions
 function script_description()
-	-- return "Randomly choose a single source from selected sources"
-	return "選択されたソース一覧からランダムにひとつ選んで再生するスクリプト"
+    -- return "Randomly choose a single source from selected sources"
+    return "選択されたソース一覧からランダムにひとつ選んで再生するスクリプト"
 end
 
 -- A function called when settings are changed
@@ -180,9 +180,7 @@ function script_update(settings)
         source_names[i] = source_name
     end
     obs.obs_data_array_release(selected_sources)
-	if #source_names == 0 then
-		return
-	end
+    if #source_names == 0 then return end
     -- Initalize play probabilities
     local prob_str = obs.obs_data_get_string(settings, "probs")
     local probs = parse_probs(prob_str)
@@ -237,8 +235,8 @@ end
 -- A fuction called on save
 function script_save(settings)
     for k, v in pairs(hotkeys) do
-	    local hotkey_save_array = obs.obs_hotkey_save(hk[k])
-	    obs.obs_data_set_array(settings, k, hotkey_save_array)
-	    obs.obs_data_array_release(hotkey_save_array)
+        local hotkey_save_array = obs.obs_hotkey_save(hk[k])
+        obs.obs_data_set_array(settings, k, hotkey_save_array)
+        obs.obs_data_array_release(hotkey_save_array)
     end
 end
