@@ -112,10 +112,16 @@ local function parse_probs(probs_text)
     for prob in string.gmatch(probs_text, "([^:]+)") do
         local num = tonumber(prob)
         if num ~= nil then
-            probs[i] = num
-            i = i + 1
+            if num > 0.0 then
+                probs[i] = num
+                i = i + 1
+            else
+                warn("Error: 確率比に0以下の数字が含まれています")
+                goto parse_done
+            end
         end
     end
+    ::parse_done::
     return probs
 end
 
