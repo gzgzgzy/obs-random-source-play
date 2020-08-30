@@ -8,12 +8,19 @@ local hotkeys = {
     RANDOM_PLAY = "ソースのランダム再生",
 }
 ----------------------------------------------------------
-local function warn(message)
-    obs.script_log(obs.OBS_WARNING, message)
+local function log_warn(message)
+    local prefix = "Warn: "
+    obs.script_log(obs.OBS_WARNING, prefix .. message)
 end
 
-local function info(message)
-    obs.script_log(obs.OBS_INFO, message)
+local function log_info(message)
+    local prefix = "Info: "
+    obs.script_log(obs.OBS_INFO, prefix .. message)
+end
+
+local function log_error(message)
+    local prefix = "Error: "
+    obs.script_log(obs.OBS_ERROR, prefix .. message)
 end
 
 -- PartitionTree
@@ -30,7 +37,7 @@ function PartitionTree:new(intervals, labels)
         elseif interval[1] >= node.interval[2] then
             add_interval(interval, node.right)
         else
-            obs.script_log(obs.OBS_WARNING, "Error in add_interval()")
+            log_error("Interval is out of bounds in add_interval()")
         end
     end
     local o = {}
@@ -77,7 +84,7 @@ function MultinomialSampler:new(probs, labels)
         end
         -- Comparing in string form to avoid float point error
         if tostring(acc) ~= tostring(1.0) then
-            warn(string.format("Sum of probabilities: %f != 1.0", acc))
+            log_warn(string.format("Sum of probabilities: %f != 1.0", acc))
         end
         -- Generate intervals
         local intervals = {}
@@ -102,7 +109,7 @@ end
 
 ----------------------------------------------------------
 local function set_status(settings, status_text)
-    info("settings status text")
+    log_info("settings status text")
     obs.obs_data_set_default_string(settings, "status", status_text)
 end
 
@@ -116,7 +123,7 @@ local function parse_probs(probs_text)
                 probs[i] = num
                 i = i + 1
             else
-                warn("Error: 確率比に0以下の数字が含まれています")
+                log_warn("確率比に0以下の数字が含まれています")
                 goto parse_done
             end
         end
@@ -142,9 +149,10 @@ end
 
 local function play_random_source(pressed)
     if not pressed then return end
+    log_info("--- Play random source ---")
     -- Check everything before playing source
     if #source_names == 0 then
-        warn("Error: ソースが一つも選択されていません")
+        log_error("ソースが一つも選択されていません")
         return
     end
     local n_source = 0
@@ -152,24 +160,24 @@ local function play_random_source(pressed)
         -- Check if source with this name exists
         local source = obs.obs_get_source_by_name(name)
         if source == nil then
-            warn(string.format("Error: ソース「%s」が存在しません", name))
+            log_error(string.format("ソース「%s」が存在しません", name))
         else
-            info(string.format("Ok: ソース「%s」の存在を確認しました", name))
+            log_info(string.format("ソース「%s」の存在を確認しました", name))
             n_source = n_source + 1
         end
         obs.obs_source_release(source)
     end
     if #source_names ~= n_source then
-        warn(string.format("Error: 選択したソース名の数 %d != 確認できたソースの数 %d", #source_names, n_source))
+        log_error(string.format("選択したソース名の数 %d != 確認できたソースの数 %d", #source_names, n_source))
         return
     end
     local idx = sampler:sample()
-    info(string.format("Ok: ソース「%s」を選択", source_names[idx]))
+    log_info(string.format("ソース「%s」を選択", source_names[idx]))
     local scene_source = obs.obs_get_source_by_name(get_current_scene_name())
     local scene = obs.obs_scene_from_source(scene_source)
     local sceneitem = obs.obs_scene_find_source(scene, source_names[idx])
     if not sceneitem then
-        warn(string.format("Error: 現在のシーンにソース「%s」が存在しません", source_names[idx]))
+        log_error(string.format("現在のシーンにソース「%s」が存在しません", source_names[idx]))
     else
         obs.obs_sceneitem_set_visible(sceneitem, true)
         local source = obs.obs_sceneitem_get_source(sceneitem)
@@ -189,11 +197,10 @@ end
 
 -- A function called when settings are changed
 function script_update(settings)
-    info("--- Script updated ---")
+    log_info("--- Script updated ---")
 
     local selected_sources = obs.obs_data_get_array(settings, "media_sources")
     local n_source_names = obs.obs_data_array_count(selected_sources)
-    local status = ""
     source_names = {}
     for i = 1, n_source_names do
         local source_obj = obs.obs_data_array_item(selected_sources, i - 1)
@@ -224,9 +231,8 @@ function script_update(settings)
     end
 
     for i, _ in ipairs(source_names) do
-        status = status .. string.format("%s: %f\n", source_names[i], normalized_probs[i])
+        log_info(string.format("%s: %f", source_names[i], normalized_probs[i]))
     end
-    info(status)
 
     -- Initialize multinomial sampler
     init_sampler(normalized_probs)
@@ -234,7 +240,7 @@ end
 
 -- Set user-configurable properties
 function script_properties()
-    info("--- Script properties configured ---")
+    log_info("--- Script properties configured ---")
     local props = obs.obs_properties_create()
     local p_sources = obs.obs_properties_add_editable_list(props, "media_sources", "選択ソース一覧", obs.OBS_EDITABLE_LIST_TYPE_STRINGS, nil, nil)
     local p_probs = obs.obs_properties_add_text(props, "probs", "確率比", obs.OBS_TEXT_DEFAULT)
@@ -243,7 +249,7 @@ end
 
 -- A fuction called on startup
 function script_load(settings)
-    info("--- Script loaded ---")
+    log_info("--- Script loaded ---")
     math.randomseed(os.clock()*100000000000)
     for k, v in pairs(hotkeys) do
         hk[k] = obs.obs_hotkey_register_frontend(k, v, play_random_source)
