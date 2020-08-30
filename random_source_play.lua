@@ -7,18 +7,22 @@ local hk = {}
 local hotkeys = {
     RANDOM_PLAY = "ソースのランダム再生",
 }
+local log_enabled = false
 ----------------------------------------------------------
 local function log_warn(message)
+    if not log_enabled then return end
     local prefix = "Warn: "
     obs.script_log(obs.OBS_WARNING, prefix .. message)
 end
 
 local function log_info(message)
+    if not log_enabled then return end
     local prefix = "Info: "
     obs.script_log(obs.OBS_INFO, prefix .. message)
 end
 
 local function log_error(message)
+    if not log_enabled then return end
     local prefix = "Error: "
     obs.script_log(obs.OBS_ERROR, prefix .. message)
 end
@@ -197,6 +201,7 @@ end
 
 -- A function called when settings are changed
 function script_update(settings)
+    log_enabled = obs.obs_data_get_bool(settings, "log_enabled")
     log_info("--- Script updated ---")
 
     local selected_sources = obs.obs_data_get_array(settings, "media_sources")
@@ -244,6 +249,7 @@ function script_properties()
     local props = obs.obs_properties_create()
     local p_sources = obs.obs_properties_add_editable_list(props, "media_sources", "選択ソース一覧", obs.OBS_EDITABLE_LIST_TYPE_STRINGS, nil, nil)
     local p_probs = obs.obs_properties_add_text(props, "probs", "確率比", obs.OBS_TEXT_DEFAULT)
+    local p_log = obs.obs_properties_add_bool(props, "log_enabled", "ログを出力する")
     return props
 end
 
