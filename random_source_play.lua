@@ -42,8 +42,8 @@ end
 
 function PartitionTree:get_label(value)
     local function get_interval(value, node)
-        left_bound = node.interval[1]
-        right_bound = node.interval[2]
+        local left_bound = node.interval[1]
+        local right_bound = node.interval[2]
         if value < left_bound then
             return get_interval(value, node.left)
         elseif value > right_bound then
@@ -93,20 +93,20 @@ function MultinomialSampler:sample()
 end
 
 ----------------------------------------------------------
-function warn(message)
+local function warn(message)
     obs.script_log(obs.OBS_WARNING, message)
 end
 
-function info(message)
+local function info(message)
     obs.script_log(obs.OBS_INFO, message)
 end
 
-function set_status(settings, status_text)
+local function set_status(settings, status_text)
     info("settings status text")
     obs.obs_data_set_default_string(settings, "status", status_text)
 end
 
-function parse_probs(probs_text)
+local function parse_probs(probs_text)
     local probs = {}
     local i = 1
     for prob in string.gmatch(probs_text, "([^:]+)") do
@@ -119,7 +119,7 @@ function parse_probs(probs_text)
     return probs
 end
 
-function init_sampler(probs)
+local function init_sampler(probs)
     local labels = {}
     for i = 1, #probs do
         labels[i] = i
@@ -127,14 +127,14 @@ function init_sampler(probs)
     sampler = MultinomialSampler:new(probs, labels)
 end
 
-function get_current_scene_name()
+local function get_current_scene_name()
     local scene_source = obs.obs_frontend_get_current_scene()
     local name = obs.obs_source_get_name(scene_source)
     obs.obs_source_release(scene_source)
     return name
 end
 
-function play_random_source(pressed)
+local function play_random_source(pressed)
     if not pressed then return end
     -- Check everything before playing source
     if #source_names == 0 then
