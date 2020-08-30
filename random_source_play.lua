@@ -8,6 +8,14 @@ local hotkeys = {
     RANDOM_PLAY = "ソースのランダム再生",
 }
 ----------------------------------------------------------
+local function warn(message)
+    obs.script_log(obs.OBS_WARNING, message)
+end
+
+local function info(message)
+    obs.script_log(obs.OBS_INFO, message)
+end
+
 -- PartitionTree
 PartitionTree = {}
 PartitionTree.__index = PartitionTree
@@ -93,14 +101,6 @@ function MultinomialSampler:sample()
 end
 
 ----------------------------------------------------------
-local function warn(message)
-    obs.script_log(obs.OBS_WARNING, message)
-end
-
-local function info(message)
-    obs.script_log(obs.OBS_INFO, message)
-end
-
 local function set_status(settings, status_text)
     info("settings status text")
     obs.obs_data_set_default_string(settings, "status", status_text)
@@ -138,7 +138,7 @@ local function play_random_source(pressed)
     if not pressed then return end
     -- Check everything before playing source
     if #source_names == 0 then
-        info("Error: ソースが一つも選択されていません")
+        warn("Error: ソースが一つも選択されていません")
         return
     end
     local n_source = 0
